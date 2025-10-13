@@ -6,7 +6,7 @@ public class EnemySpawner : MonoBehaviour
     public int numberOfEnemiesToSpawn = 10; // 이 스포너가 생성할 총 적의 수
     public float spawnRange = 5f;
 
-    void Start()
+    void OnEnable()
     {
         SpawnEnemies();
     }
