@@ -20,24 +20,18 @@ public class Enemy : MonoBehaviour
     private int currentHp;
     public Slider hpSlider;
 
-    [Header("플레이어 버프 설정")]
+    [Header("플레이어 버프/디버프 설정")]
     [SerializeField] private int healAmount = 20;
     [SerializeField] private float speedBoostAmount = 3f;
     [SerializeField] private float speedBoostDuration = 5f;
+    [SerializeField] private int penaltyDamage = 10;
 
     [Header("사망 효과")]
     public GameObject deathEffectPrefab;
     
-    // --- AI 개선을 위한 변수 ---
-    [Header("AI 설정")]
-    public float selfDefenseRange = 5f; // 이 거리 안으로 플레이어가 들어오면 자신을 방어하기 위해 공격합니다.
-    public float aggroDuration = 5f;    // 공격받았을 때 플레이어에게 화가 나 있는 시간(초)입니다.
-    
     private Transform player;
     private Crystal crystal;
-    private Transform currentTarget; // 현재 공격 목표 (플레이어 또는 크리스탈)
-    private EnemySpawner spawner;
-    private bool isAggroed = false; // 플레이어에게 화가 나 있는지 여부
+    private Transform currentTarget; // 현재 공격 목표
 
     void Start()
     {
@@ -54,17 +48,20 @@ public class Enemy : MonoBehaviour
 
     void Update()
     {
-        // 매 프레임마다 가장 적절한 공격 대상을 찾습니다.
-        if (!FindTarget())
+        // 매 프레임마다 공격 대상을 찾습니다.
+        FindTarget();
+
+        // 공격할 대상이 없으면 아무것도 하지 않습니다.
+        if (currentTarget == null)
         {
-            State = EnemyState.Idle; // 공격할 대상이 없으면 대기 상태로 변경
+            State = EnemyState.Idle;
             return;
         }
 
         float dist = Vector3.Distance(currentTarget.position, transform.position);
-
-        // 체력이 낮으면 도망가는 로직 (현재 목표로부터 도망)
-        if (currentHp <= maxHp * 0.2f && State != EnemyState.Idle)
+        
+        // 체력이 낮으면 도망가는 로직은 그대로 유지합니다.
+        if (currentHp <= maxHp * 0.2f)
         {
             State = EnemyState.RunAway;
         }
@@ -72,13 +69,14 @@ public class Enemy : MonoBehaviour
         switch (State)
         {
             case EnemyState.Idle:
+                // 대기 상태에서도 목표가 추적 범위 안에 들어오면 바로 추적 시작
                 if (dist < traceRange)
                     State = EnemyState.Trace;
                 break;
             case EnemyState.Trace:
                 if (dist < attackRange)
                     State = EnemyState.Attack;
-                else if (dist > traceRange && !isAggroed) // 화가 나있지 않을 때만 추적을 멈춤
+                else if (dist > traceRange) // 추적 범위를 벗어나면 다시 대기
                     State = EnemyState.Idle;
                 else
                     TraceTarget();
@@ -90,7 +88,7 @@ public class Enemy : MonoBehaviour
                     AttackTarget();
                 break;
             case EnemyState.RunAway:
-                if (dist > traceRange * 1.2f) // 추적 범위보다 조금 더 멀어지면 대기 상태로
+                if (dist > traceRange * 1.2f)
                     State = EnemyState.Idle;
                 else
                     Runaway();
@@ -98,49 +96,28 @@ public class Enemy : MonoBehaviour
         }
     }
 
-    // AI의 핵심: 공격할 목표를 결정하는 함수
-    bool FindTarget()
+    // AI 로직을 단순화: 플레이어와 크리스탈 중 더 가까운 대상을 공격
+    void FindTarget()
     {
-        // 플레이어와 크리스탈이 모두 없으면 목표를 찾지 않음
-        if (player == null && crystal == null)
-        {
-            currentTarget = null;
-            return false;
-        }
+        float playerDist = float.MaxValue;
+        float crystalDist = float.MaxValue;
 
-        // 크리스탈이 파괴되었다면 플레이어만 공격
-        if (crystal == null)
-        {
-            currentTarget = player;
-            return player != null;
-        }
-        
-        // 플레이어가 죽었다면 크리스탈만 공격
-        if (player == null)
-        {
-            currentTarget = crystal.transform;
-            return crystal != null;
-        }
+        if (player != null)
+            playerDist = Vector3.Distance(player.position, transform.position);
 
-        float playerDist = Vector3.Distance(player.position, transform.position);
+        if (crystal != null)
+            crystalDist = Vector3.Distance(crystal.transform.position, transform.position);
 
-        // 우선순위 1: 공격받아서 화가 났다면 플레이어를 공격
-        if (isAggroed)
+        // 플레이어가 크리스탈보다 가까우면 플레이어를 목표로 설정
+        if (playerDist < crystalDist)
         {
             currentTarget = player;
         }
-        // 우선순위 2: 플레이어가 너무 가까우면 (자기 방어) 플레이어를 공격
-        else if (playerDist < selfDefenseRange)
-        {
-            currentTarget = player;
-        }
-        // 우선순위 3: 그 외의 모든 경우, 기본 목표인 크리스탈을 공격
+        // 그렇지 않다면 크리스탈을 목표로 설정 (플레이어나 크리스탈이 없을 경우 null이 됨)
         else
         {
-            currentTarget = crystal.transform;
+            currentTarget = (crystal != null) ? crystal.transform : player;
         }
-
-        return true;
     }
     
     public void TakeDamage(int damage)
@@ -150,33 +127,13 @@ public class Enemy : MonoBehaviour
         {
             hpSlider.value = (float)currentHp / maxHp;
         }
-
-        // 플레이어에게 공격받으면 일정 시간 동안 화가 난 상태가 됨
-        if (player != null)
-        {
-            StopCoroutine("AggroTimer"); // 이미 화난 상태라면 타이머 초기화
-            StartCoroutine(AggroTimer());
-        }
-
+        
         if (currentHp <= 0)
         {
             Die();
         }
     }
-
-    // 일정 시간 동안만 '화난' 상태를 유지하는 코루틴
-    IEnumerator AggroTimer()
-    {
-        isAggroed = true;
-        yield return new WaitForSeconds(aggroDuration);
-        isAggroed = false;
-    }
     
-    public void SetSpawner(EnemySpawner _spawner)
-    {
-        spawner = _spawner;
-    }
-
     void TraceTarget()
     {
         Vector3 dir = (currentTarget.position - transform.position).normalized;
@@ -186,7 +143,7 @@ public class Enemy : MonoBehaviour
 
     void AttackTarget()
     {
-        transform.LookAt(currentTarget.position); // 공격 시에도 목표를 바라보도록 수정
+        transform.LookAt(currentTarget.position);
         if (Time.time >= lastAttackTime + attackCooldown)
         {
             lastAttackTime = Time.time;
@@ -210,10 +167,9 @@ public class Enemy : MonoBehaviour
 
     void Runaway()
     {
-        // 현재 목표로부터 멀어지는 방향으로 이동 (뒤돌아서 도망)
         Vector3 dir = (transform.position - currentTarget.position).normalized;
         transform.position += dir * moveSpeed * Time.deltaTime;
-        transform.rotation = Quaternion.LookRotation(dir); // 도망가는 방향을 바라봄
+        transform.rotation = Quaternion.LookRotation(dir);
     }
 
     void Die()
@@ -223,29 +179,32 @@ public class Enemy : MonoBehaviour
             Instantiate(deathEffectPrefab, transform.position, Quaternion.identity);
         }
 
-        if (spawner != null)
-        {
-            spawner.RecordEnemyKilled();
-        }
+        FindObjectOfType<GameManager>()?.RecordKill();
 
         PlayerControoller playerController = FindObjectOfType<PlayerControoller>();
         if (playerController != null)
         {
-            ApplyRandomBuff(playerController);
+            ApplyRandomEffect(playerController);
         }
 
         Destroy(gameObject);
     }
     
-    private void ApplyRandomBuff(PlayerControoller player)
+    private void ApplyRandomEffect(PlayerControoller player)
     {
-        if (Random.Range(0, 2) == 0)
+        int randomIndex = Random.Range(0, 3);
+
+        if (randomIndex == 0)
         {
             player.Heal(healAmount);
         }
-        else
+        else if (randomIndex == 1)
         {
             player.SpeedUp(speedBoostAmount, speedBoostDuration);
+        }
+        else
+        {
+            player.TakeDamage(penaltyDamage);
         }
     }
 }

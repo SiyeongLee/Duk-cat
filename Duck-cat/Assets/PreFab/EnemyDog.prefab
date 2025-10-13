@@ -467,9 +467,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   State: 0
   moveSpeed: 2
-  traceRange: 15
+  traceRange: 50
   attackRange: 6
-  attackcooldown: 1.5
+  attackCooldown: 1.5
   projectileprefab: {fileID: 7275688212673526056, guid: 7d5af769a0a9f2d47be02d0e1a3930ac,
     type: 3}
   firePoint: {fileID: 8851443617931609745}
@@ -480,6 +480,8 @@ MonoBehaviour:
   speedBoostDuration: 5
   deathEffectPrefab: {fileID: 6523002006538456268, guid: dd204c889cb16764dbc2ad6813253e4c,
     type: 3}
+  selfDefenseRange: 5
+  aggroDuration: 5
 --- !u!54 &7537962077164288114
 Rigidbody:
   m_ObjectHideFlags: 0
