@@ -106,14 +106,17 @@ public class PlayerControoller : MonoBehaviour
     }
     
     void Die()
+{
+    if (deathEffectPrefab != null)
     {
-        // 사망 효과 프리팹이 할당되어 있다면, 플레이어 위치에 생성
-        if (deathEffectPrefab != null)
-        {
-            Instantiate(deathEffectPrefab, transform.position, Quaternion.identity);
-        }
-        Destroy(gameObject);
+        Instantiate(deathEffectPrefab, transform.position, Quaternion.identity);
     }
+
+    // GameManager를 찾아 GameOver 함수 호출
+    FindObjectOfType<GameManager>().GameOver();
+    
+    Destroy(gameObject);
+}
 
     public void Heal(int amount)
     {

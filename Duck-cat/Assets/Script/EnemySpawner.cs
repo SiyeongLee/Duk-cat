@@ -46,21 +46,20 @@ public class EnemySpawner : MonoBehaviour
     }
 
     // 적이 처치될 때마다 이 함수를 호출하여 카운트를 올림
+   
     public void RecordEnemyKilled()
+    {   
+    if (isSpawningStopped) return;
+    
+    // GameManager에 처치 기록을 알림
+    FindObjectOfType<GameManager>()?.RecordKill();
+
+    killCount++;
+    if (killCount >= maxKillCount)
     {
-        if (isSpawningStopped) return;
-
-        killCount++;
-        Debug.Log(gameObject.name + " - 처치한 적: " + killCount + " / " + maxKillCount);
-
-        // 최대 처치 수에 도달하면 스폰을 중지
-        if (killCount >= maxKillCount)
-        {
-            isSpawningStopped = true;
-            Debug.Log(gameObject.name + "에서 더 이상 적이 스폰되지 않습니다.");
-        }
+        isSpawningStopped = true;
     }
-
+}
     void OnDrawGizmosSelected()
     {
         Gizmos.color = Color.red;

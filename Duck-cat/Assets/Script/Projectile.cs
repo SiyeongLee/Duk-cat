@@ -19,15 +19,21 @@ public class Projectile : MonoBehaviour
     {
         transform.Translate(Vector3.forward * speed * Time.deltaTime);
     }
+
     private void OnTriggerEnter(Collider other)
     { 
         if (other.CompareTag("Enemy"))
         {
             Enemy enemy = other.GetComponent<Enemy>();
             if (enemy != null) enemy.TakeDamage(Weapondamage);
-                Destroy(gameObject);
+            Destroy(gameObject);
         }
-       
+        // 크리스탈에 부딪혔을 때의 로직 추가
+        else if (other.CompareTag("Crystal"))
+        {
+            Crystal crystal = other.GetComponent<Crystal>();
+            if (crystal != null) crystal.TakeDamage(Weapondamage);
+            Destroy(gameObject);
+        }
     }
-
 }

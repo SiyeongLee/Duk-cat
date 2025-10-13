@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class EnemyProjectile : MonoBehaviour
@@ -15,20 +13,19 @@ public class EnemyProjectile : MonoBehaviour
         moveDir = dir.normalized;
     }
     
-
-    // Start is called before the first frame update
     void Start()
     {
         Destroy(gameObject, lifeTime);
     }
 
-    // Update is called once per frame
     void Update()
     {
         transform.position += moveDir * speed * Time.deltaTime;
     }
+
     private void OnTriggerEnter(Collider other)
     {
+        // 플레이어에게 부딪혔을 때
         if (other.CompareTag("Player"))
         {
             PlayerControoller pc = other.GetComponent<PlayerControoller>();
@@ -36,6 +33,13 @@ public class EnemyProjectile : MonoBehaviour
             
             Destroy(gameObject);
         }
+        // 크리스탈에게 부딪혔을 때
+        else if (other.CompareTag("Crystal"))
+        {
+            Crystal crystal = other.GetComponent<Crystal>();
+            if (crystal != null) crystal.TakeDamage(damage);
 
+            Destroy(gameObject);
+        }
     }
 }
