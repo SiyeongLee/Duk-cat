@@ -448,6 +448,8 @@ MonoBehaviour:
   isGrounded: 0
   maxHP: 100
   hpSlider: {fileID: 1642020985}
+  deathEffectPrefab: {fileID: 6523002006538456268, guid: dd204c889cb16764dbc2ad6813253e4c,
+    type: 3}
 --- !u!143 &329740362
 CharacterController:
   m_ObjectHideFlags: 0
@@ -1847,7 +1849,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1561070278}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.08678004, y: -0.9131376, z: 0.28799105, w: 0.27515483}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -2015,7 +2017,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1662858526}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.07535139, y: -0.9242442, z: 0.25006354, w: 0.27850154}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0

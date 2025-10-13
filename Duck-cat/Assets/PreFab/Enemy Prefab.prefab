@@ -289,6 +289,11 @@ MonoBehaviour:
   firePoint: {fileID: 3023449551374744510}
   maxHp: 5
   hpSlider: {fileID: 4939419795107693461}
+  healAmount: 20
+  speedBoostAmount: 3
+  speedBoostDuration: 5
+  deathEffectPrefab: {fileID: 6523002006538456268, guid: dd204c889cb16764dbc2ad6813253e4c,
+    type: 3}
 --- !u!54 &112799730654686358
 Rigidbody:
   m_ObjectHideFlags: 0

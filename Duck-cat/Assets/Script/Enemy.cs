@@ -6,15 +6,12 @@ using UnityEngine.UI;
 
 public class Enemy : MonoBehaviour
 {
-    public enum EnemyState { Idle, Trace, Attack, RunAway}
+    public enum EnemyState { Idle, Trace, Attack, RunAway }
     public EnemyState State = EnemyState.Idle;
     public float moveSpeed = 2f;
     public float traceRange = 15f;
     public float attackRange = 6f;
     public float attackcooldown = 1.5f;
-    
-
-
 
     public GameObject projectileprefab;
     public Transform firePoint;
@@ -23,44 +20,45 @@ public class Enemy : MonoBehaviour
     public int maxHp = 5;
     private int currentHp;
     public Slider hpSlider;
-    public void TakeDamage(int damage)
-    {
-       
-        currentHp -= damage;
-        hpSlider.value = (float)currentHp / maxHp;
-        if (currentHp <= 0)
-        {
-            Die();
-        }
-    }
 
-    private Transform player; 
-    // Start is called before the first frame update
+    [Header("플레이어 버프 설정")]
+    [SerializeField] private int healAmount = 20;
+    [SerializeField] private float speedBoostAmount = 3f;
+    [SerializeField] private float speedBoostDuration = 5f;
+
+    // 사망 효과 프리팹을 연결할 변수 추가
+    [Header("사망 효과")]
+    public GameObject deathEffectPrefab;
+
+    private Transform player;
+
     void Start()
     {
         player = GameObject.FindGameObjectWithTag("Player").transform;
         lastAttackTime = -attackcooldown;
         currentHp = maxHp;
-        hpSlider.value = 1f;
+        if (hpSlider != null)
+        {
+            hpSlider.value = 1f;
+        }
     }
 
-    // Update is called once per frame
     void Update()
     {
         if (player == null) return;
         float dist = Vector3.Distance(player.position, transform.position);
-        
-        if(currentHp <= maxHp * 0.2f && State != EnemyState.Idle)
+
+        if (currentHp <= maxHp * 0.2f && State != EnemyState.Idle)
         {
             State = EnemyState.RunAway;
         }
+
         switch (State)
         {
             case EnemyState.Idle:
                 if (dist < traceRange)
                     State = EnemyState.Trace;
                 break;
-
             case EnemyState.Trace:
                 if (dist < attackRange)
                     State = EnemyState.Attack;
@@ -69,7 +67,6 @@ public class Enemy : MonoBehaviour
                 else
                     TracePlayer();
                 break;
-
             case EnemyState.Attack:
                 if (dist > attackRange)
                     State = EnemyState.Trace;
@@ -82,23 +79,27 @@ public class Enemy : MonoBehaviour
                 else
                     Runaway();
                 break;
-      
-
         }
-            
-
-
-
-        
-
-        
     }
+
+    public void TakeDamage(int damage)
+    {
+        currentHp -= damage;
+        if (hpSlider != null)
+        {
+            hpSlider.value = (float)currentHp / maxHp;
+        }
+        if (currentHp <= 0)
+        {
+            Die();
+        }
+    }
+
     void TracePlayer()
     {
         Vector3 dir = (player.position - transform.position).normalized;
         transform.position += dir * moveSpeed * Time.deltaTime;
         transform.LookAt(player.position);
-
     }
 
     void AttackPlayer()
@@ -109,6 +110,7 @@ public class Enemy : MonoBehaviour
             Shootprojectile();
         }
     }
+
     void Shootprojectile()
     {
         if (projectileprefab != null && firePoint != null)
@@ -122,18 +124,44 @@ public class Enemy : MonoBehaviour
                 ep.SetDirection(dir);
             }
         }
-       
-        
     }
+
     void Runaway()
     {
         Vector3 dir = (player.position - transform.position).normalized;
         transform.position -= dir * moveSpeed * Time.deltaTime;
         transform.LookAt(player.position);
     }
+
     void Die()
     {
+        // 사망 효과 프리팹이 할당되어 있다면, 적의 위치에 생성
+        if (deathEffectPrefab != null)
+        {
+            Instantiate(deathEffectPrefab, transform.position, Quaternion.identity);
+        }
+
+        PlayerControoller playerController = FindObjectOfType<PlayerControoller>();
+
+        if (playerController != null)
+        {
+            ApplyRandomBuff(playerController);
+        }
 
         Destroy(gameObject);
+    }
+    
+    private void ApplyRandomBuff(PlayerControoller player)
+    {
+        if (Random.Range(0, 2) == 0)
+        {
+            Debug.Log("체력 회복 버프!");
+            player.Heal(healAmount);
+        }
+        else
+        {
+            Debug.Log("스피드 업 버프!");
+            player.SpeedUp(speedBoostAmount, speedBoostDuration);
+        }
     }
 }

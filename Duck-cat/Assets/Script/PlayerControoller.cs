@@ -4,9 +4,7 @@ using UnityEngine;
 using Cinemachine;
 using UnityEngine.UI;
 
-
 public class PlayerControoller : MonoBehaviour
-
 {
     public float speed = 5f;
     public float jumpPower = 5f;
@@ -22,7 +20,12 @@ public class PlayerControoller : MonoBehaviour
     private int currentHp;
     public Slider hpSlider;
 
-    // Start is called before the first frame update
+    // 사망 효과 프리팹을 연결할 변수 추가
+    [Header("사망 효과")]
+    public GameObject deathEffectPrefab;
+    
+    private float originalSpeed;
+
     void Start()
     {
         controller = GetComponent<CharacterController>();
@@ -30,9 +33,10 @@ public class PlayerControoller : MonoBehaviour
 
         currentHp = maxHP;
         hpSlider.value = 1f;
+        
+        originalSpeed = speed;
     }
 
-    // Update is called once per frame
     void Update()
     {
         if (Input.GetKeyDown(KeyCode.Tab))
@@ -43,17 +47,18 @@ public class PlayerControoller : MonoBehaviour
         CinemacineSwitcher switcher = FindObjectOfType<CinemacineSwitcher>();
         isGrounded = controller.isGrounded;
 
+        float currentSpeed = speed;
         if (Input.GetKey(KeyCode.LeftShift))
         {
-            speed = 10f;
+            currentSpeed = 10f;
             virtualCam.m_Lens.FieldOfView = 80f;
 
         }
         else
         {
-            speed = 5f;
             virtualCam.m_Lens.FieldOfView = 60f;
         }
+
         if (isGrounded && velocity.y < 0)
         {
             velocity.y = -2f;
@@ -76,7 +81,7 @@ public class PlayerControoller : MonoBehaviour
         }
 
         Vector3 move = (camForward * z + camRight * x).normalized;
-        controller.Move(move * speed * Time.deltaTime);
+        controller.Move(move * currentSpeed * Time.deltaTime);
 
         float cameraYaw = pov.m_HorizontalAxis.Value;
         Quaternion targetRot = Quaternion.Euler(0f, cameraYaw, 0f);
@@ -102,14 +107,39 @@ public class PlayerControoller : MonoBehaviour
     
     void Die()
     {
+        // 사망 효과 프리팹이 할당되어 있다면, 플레이어 위치에 생성
+        if (deathEffectPrefab != null)
+        {
+            Instantiate(deathEffectPrefab, transform.position, Quaternion.identity);
+        }
         Destroy(gameObject);
     }
 
-    
+    public void Heal(int amount)
+    {
+        currentHp += amount;
+        if (currentHp > maxHP)
+        {
+            currentHp = maxHP;
+        }
+        hpSlider.value = (float)currentHp / maxHP;
+        Debug.Log($"체력 {amount} 회복! 현재 HP: {currentHp}");
+    }
 
+    public void SpeedUp(float boostAmount, float duration)
+    {
+        StopCoroutine("SpeedBoostCoroutine");
+        StartCoroutine(SpeedBoostCoroutine(boostAmount, duration));
+    }
 
+    private IEnumerator SpeedBoostCoroutine(float boostAmount, float duration)
+    {
+        speed += boostAmount;
+        Debug.Log($"스피드 업! {duration}초 동안 속도 증가!");
+
+        yield return new WaitForSeconds(duration);
+
+        speed = originalSpeed;
+        Debug.Log("스피드 버프 종료. 원래 속도로 돌아갑니다.");
+    }
 }
-
-
-
-
