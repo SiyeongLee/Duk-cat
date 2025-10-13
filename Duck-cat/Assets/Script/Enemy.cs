@@ -25,12 +25,12 @@ public class Enemy : MonoBehaviour
     [SerializeField] private int healAmount = 20;
     [SerializeField] private float speedBoostAmount = 3f;
     [SerializeField] private float speedBoostDuration = 5f;
-
-    // 사망 효과 프리팹을 연결할 변수 추가
+    
     [Header("사망 효과")]
     public GameObject deathEffectPrefab;
 
     private Transform player;
+    private EnemySpawner spawner; // 자신을 생성한 스포너를 저장할 변수
 
     void Start()
     {
@@ -94,6 +94,12 @@ public class Enemy : MonoBehaviour
             Die();
         }
     }
+    
+    // 스포너 정보를 설정하는 함수 추가
+    public void SetSpawner(EnemySpawner _spawner)
+    {
+        spawner = _spawner;
+    }
 
     void TracePlayer()
     {
@@ -135,14 +141,18 @@ public class Enemy : MonoBehaviour
 
     void Die()
     {
-        // 사망 효과 프리팹이 할당되어 있다면, 적의 위치에 생성
         if (deathEffectPrefab != null)
         {
             Instantiate(deathEffectPrefab, transform.position, Quaternion.identity);
         }
 
-        PlayerControoller playerController = FindObjectOfType<PlayerControoller>();
+        // 자신을 생성한 스포너에게 처치되었음을 알림
+        if (spawner != null)
+        {
+            spawner.RecordEnemyKilled();
+        }
 
+        PlayerControoller playerController = FindObjectOfType<PlayerControoller>();
         if (playerController != null)
         {
             ApplyRandomBuff(playerController);
