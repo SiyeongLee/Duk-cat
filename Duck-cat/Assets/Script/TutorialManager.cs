@@ -1,36 +1,35 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using System.Collections;
 
 public class TutorialManager : MonoBehaviour
 {
     [Header("UI 요소")]
     public GameObject tutorialPanel;
     public TextMeshProUGUI instructionText;
-    public Button confirmButton;
     public Button skipButton;
-    public Button finishButton; // 새로 추가한 종료 버튼
 
     [Header("튜토리얼 제어 대상")]
     public PlayerControoller playerController;
     public PlayerShooting playerShooting;
     public EnemySpawner[] enemySpawners;
 
+    [Header("튜토리얼 설정")]
+    public float delayAfterAction = 1.5f;
+
     private int currentStep = 0;
-    private bool isActionDone = false;
+    private bool stepCompleted = false;
     private string[] instructions = {
         "W, A, S, D 키를 사용하여 이동해 보세요.",
-        "마우스 좌우로 움직여 보세요.",
+        "마우스를 움직여 주변을 둘러보세요.",
         "마우스 왼쪽 버튼을 클릭하여 공격해 보세요.",
-        "이동할수 있는 포탈은 모든 적을 처치해야 생성됩니다 E키를 눌러 포탈을 타고이동할수 있습니다",
-        "튜토리얼 완료! 이제 크리스탈을 지키세요."
+        "튜토리얼 완료! 곧 게임이 시작됩니다."
     };
 
     void Start()
     {
         tutorialPanel.SetActive(true);
-        confirmButton.gameObject.SetActive(false);
-        finishButton.gameObject.SetActive(false); // 시작 시 종료 버튼 비활성화
 
         playerController.enabled = false;
         playerShooting.enabled = false;
@@ -40,73 +39,80 @@ public class TutorialManager : MonoBehaviour
             spawner.enabled = false;
         }
 
-        // 각 버튼에 함수 연결
-        confirmButton.onClick.AddListener(OnConfirmButtonClicked);
         skipButton.onClick.AddListener(SkipTutorial);
-        finishButton.onClick.AddListener(EndTutorial); // 종료 버튼에 EndTutorial 함수 연결
 
-        ShowNextInstruction();
+        ShowInstruction();
     }
 
     void Update()
     {
-        if (isActionDone) return;
+        if (stepCompleted) return;
 
         switch (currentStep)
         {
-            case 0: // 이동 튜토리얼
-                if (Input.GetKeyDown(KeyCode.W) || Input.GetKeyDown(KeyCode.A) || Input.GetKeyDown(KeyCode.S) || Input.GetKeyDown(KeyCode.D))
+            case 0:
+                if (Input.GetAxisRaw("Horizontal") != 0 || Input.GetAxisRaw("Vertical") != 0)
                 {
-                    ActionCompleted();
+                    StartCoroutine(AdvanceToNextStep());
                 }
                 break;
-            case 1: // 공격 튜토리얼
+            case 1:
+                if (Input.GetAxis("Mouse X") != 0 || Input.GetAxis("Mouse Y") != 0)
+                {
+                    StartCoroutine(AdvanceToNextStep());
+                }
+                break;
+            case 2:
                 if (Input.GetMouseButtonDown(0))
                 {
-                    ActionCompleted();
+                    StartCoroutine(AdvanceToNextStep());
                 }
                 break;
         }
     }
 
-    void ShowNextInstruction()
+    IEnumerator AdvanceToNextStep()
     {
-        isActionDone = false;
-        confirmButton.gameObject.SetActive(false);
-        
-        instructionText.text = instructions[currentStep];
-
-        // 마지막 튜토리얼 단계일 경우
-        if (currentStep == instructions.Length - 1)
-        {
-            isActionDone = true; // 더 이상 Update에서 행동을 감지하지 않음
-            finishButton.gameObject.SetActive(true); // 종료 버튼 활성화
-            skipButton.gameObject.SetActive(false); // 건너뛰기 버튼 비활성화
-        }
-        else // 마지막 단계가 아닐 경우
-        {
-            switch (currentStep)
-            {
-                case 0:
-                    playerController.enabled = true;
-                    break;
-                case 1:
-                    playerShooting.enabled = true;
-                    break;
-            }
-        }
-    }
-
-    void ActionCompleted()
-    {
-        isActionDone = true;
-        confirmButton.gameObject.SetActive(true);
-    }
-
-    void OnConfirmButtonClicked()
-    {
+        stepCompleted = true;
+        yield return new WaitForSeconds(delayAfterAction);
         currentStep++;
-        ShowNextInstruction();
+        ShowInstruction();
+    }
+
+    void ShowInstruction()
+    {
+        if (currentStep >= instructions.Length)
+        {
+            EndTutorial();
+            return;
+        }
+
+        instructionText.text = instructions[currentStep];
+        stepCompleted = false;
+
+        playerController.enabled = false;
+        playerShooting.enabled = false;
+
+        switch (currentStep)
+        {
+            case 0:
+            case 1:
+                playerController.enabled = true;
+                break;
+            case 2:
+                playerShooting.enabled = true;
+                break;
+            case 3:
+                stepCompleted = true;
+                StartCoroutine(FinalStep());
+                break;
+        }
+    }
+
+    IEnumerator FinalStep()
+    {
+        yield return new WaitForSeconds(2f);
+        EndTutorial();
     }
 
     void SkipTutorial()
@@ -117,13 +123,24 @@ public class TutorialManager : MonoBehaviour
 
     void EndTutorial()
     {
-        tutorialPanel.SetActive(false);
-        playerController.enabled = true;
-        playerShooting.enabled = true;
+        if (tutorialPanel != null)
+        {
+            tutorialPanel.SetActive(false);
+        }
+
+        if (playerController != null)
+        {
+            playerController.enabled = true;
+        }
+
+        if (playerShooting != null)
+        {
+            playerShooting.enabled = true;
+        }
 
         foreach (var spawner in enemySpawners)
         {
-            spawner.enabled = true;
+            if (spawner != null) spawner.enabled = true;
         }
 
         this.enabled = false;

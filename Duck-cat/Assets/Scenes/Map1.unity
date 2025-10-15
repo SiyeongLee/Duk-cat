@@ -1116,7 +1116,7 @@ PrefabInstance:
     - target: {fileID: 644728668649996503, guid: dd76a19533a7e37408146eb299dfe463,
         type: 3}
       propertyPath: maxHp
-      value: 300
+      value: 500
       objectReference: {fileID: 0}
     - target: {fileID: 3240311541814300966, guid: dd76a19533a7e37408146eb299dfe463,
         type: 3}
@@ -2421,7 +2421,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1364229657}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0.0020726908, y: 0.94025415, z: -0.340419, w: -0.0057248753}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -2897,7 +2897,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1561070278}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0.0018313192, y: 0.9536754, z: -0.30077615, w: -0.0058065914}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -3350,7 +3350,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1662858526}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0.0015901413, y: 0.965275, z: -0.261165, w: -0.005877218}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -4438,9 +4438,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tutorialPanel: {fileID: 1976730494}
   instructionText: {fileID: 1604792996}
-  confirmButton: {fileID: 1789821939}
   skipButton: {fileID: 116753762}
-  finishButton: {fileID: 401035970}
   playerController: {fileID: 329740361}
   playerShooting: {fileID: 329740364}
   enemySpawners:
@@ -4448,6 +4446,7 @@ MonoBehaviour:
   - {fileID: 1981130221}
   - {fileID: 1214789097}
   - {fileID: 1947276763}
+  delayAfterAction: 1.5
 --- !u!4 &2134683865
 Transform:
   m_ObjectHideFlags: 0

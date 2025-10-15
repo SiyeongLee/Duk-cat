@@ -23,7 +23,7 @@ public class GameManager : MonoBehaviour
         spawners = FindObjectsOfType<EnemySpawner>();
         foreach (var spawner in spawners)
         {
-            totalEnemiesToKill += spawner.numberOfEnemiesToSpawn; // 스포너가 생성할 적의 수를 합산
+            totalEnemiesToKill += spawner.numberOfEnemiesToSpawn;
         }
 
         if (totalEnemiesToKill == 0)
@@ -61,7 +61,7 @@ public class GameManager : MonoBehaviour
             portalObject.SetActive(true);
             Debug.Log("모든 적을 처치했습니다! 포탈이 나타납니다.");
         }
-        
+
         if (enemyCountText != null)
         {
             enemyCountText.text = "Stage Clear!";
@@ -74,7 +74,22 @@ public class GameManager : MonoBehaviour
         {
             gameOverPanel.SetActive(true);
         }
-        Time.timeScale = 0f;
+
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+
+        PlayerControoller playerController = FindObjectOfType<PlayerControoller>();
+        if (playerController != null)
+        {
+            playerController.GetComponent<PlayerShooting>().enabled = false;
+            playerController.GetComponent<PlayerControoller>().enabled = false;
+        }
+
+        Enemy[] enemies = FindObjectsOfType<Enemy>();
+        foreach (Enemy enemy in enemies)
+        {
+            enemy.enabled = false;
+        }
     }
 
     public void RestartGame()
