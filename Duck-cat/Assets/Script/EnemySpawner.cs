@@ -3,12 +3,14 @@ using UnityEngine;
 public class EnemySpawner : MonoBehaviour
 {
     public GameObject enemyPrefab;
-    public int numberOfEnemiesToSpawn = 10; // 이 스포너가 생성할 총 적의 수
+    public int numberOfEnemiesToSpawn = 10;
     public float spawnRange = 5f;
 
-    void OnEnable()
+    // 활성화될 때가 아닌, Start 시점에 스폰하도록 변경
+    void Start()
     {
         SpawnEnemies();
+        // GameManager 보고 로직 삭제
     }
 
     void SpawnEnemies()
@@ -20,7 +22,11 @@ public class EnemySpawner : MonoBehaviour
                 transform.position.y,
                 transform.position.z + Random.Range(-spawnRange, spawnRange)
             );
-            Instantiate(enemyPrefab, spawnPos, Quaternion.identity);
+            GameObject newEnemy = Instantiate(enemyPrefab, spawnPos, Quaternion.identity);
+            if (newEnemy.tag != "Enemy")
+            {
+                Debug.LogWarning($"경고: {enemyPrefab.name} 프리팹에 'Enemy' 태그가 설정되지 않았습니다!", newEnemy);
+            }
         }
     }
 

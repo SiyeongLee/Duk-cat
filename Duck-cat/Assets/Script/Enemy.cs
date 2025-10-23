@@ -28,10 +28,15 @@ public class Enemy : MonoBehaviour
 
     [Header("사망 효과")]
     public GameObject deathEffectPrefab;
-    
+
+    [Header("AI 설정")]
+    public float selfDefenseRange = 5f;
+    public float aggroDuration = 5f;
+
     private Transform player;
     private Crystal crystal;
-    private Transform currentTarget; // 현재 공격 목표
+    private Transform currentTarget;
+    private bool isAggroed = false;
 
     void Start()
     {
@@ -48,20 +53,15 @@ public class Enemy : MonoBehaviour
 
     void Update()
     {
-        // 매 프레임마다 공격 대상을 찾습니다.
-        FindTarget();
-
-        // 공격할 대상이 없으면 아무것도 하지 않습니다.
-        if (currentTarget == null)
+        if (!FindTarget())
         {
             State = EnemyState.Idle;
             return;
         }
 
         float dist = Vector3.Distance(currentTarget.position, transform.position);
-        
-        // 체력이 낮으면 도망가는 로직은 그대로 유지합니다.
-        if (currentHp <= maxHp * 0.2f)
+
+        if (currentHp <= maxHp * 0.2f && State != EnemyState.Idle)
         {
             State = EnemyState.RunAway;
         }
@@ -69,14 +69,13 @@ public class Enemy : MonoBehaviour
         switch (State)
         {
             case EnemyState.Idle:
-                // 대기 상태에서도 목표가 추적 범위 안에 들어오면 바로 추적 시작
                 if (dist < traceRange)
                     State = EnemyState.Trace;
                 break;
             case EnemyState.Trace:
                 if (dist < attackRange)
                     State = EnemyState.Attack;
-                else if (dist > traceRange) // 추적 범위를 벗어나면 다시 대기
+                else if (dist > traceRange && !isAggroed)
                     State = EnemyState.Idle;
                 else
                     TraceTarget();
@@ -96,30 +95,44 @@ public class Enemy : MonoBehaviour
         }
     }
 
-    // AI 로직을 단순화: 플레이어와 크리스탈 중 더 가까운 대상을 공격
-    void FindTarget()
+    bool FindTarget()
     {
-        float playerDist = float.MaxValue;
-        float crystalDist = float.MaxValue;
+        if (player == null && crystal == null)
+        {
+            currentTarget = null;
+            return false;
+        }
 
-        if (player != null)
-            playerDist = Vector3.Distance(player.position, transform.position);
+        if (crystal == null)
+        {
+            currentTarget = player;
+            return player != null;
+        }
 
-        if (crystal != null)
-            crystalDist = Vector3.Distance(crystal.transform.position, transform.position);
+        if (player == null)
+        {
+            currentTarget = crystal.transform;
+            return crystal != null;
+        }
 
-        // 플레이어가 크리스탈보다 가까우면 플레이어를 목표로 설정
-        if (playerDist < crystalDist)
+        float playerDist = Vector3.Distance(player.position, transform.position);
+
+        if (isAggroed)
         {
             currentTarget = player;
         }
-        // 그렇지 않다면 크리스탈을 목표로 설정 (플레이어나 크리스탈이 없을 경우 null이 됨)
+        else if (playerDist < selfDefenseRange)
+        {
+            currentTarget = player;
+        }
         else
         {
-            currentTarget = (crystal != null) ? crystal.transform : player;
+            currentTarget = crystal.transform;
         }
+
+        return true;
     }
-    
+
     public void TakeDamage(int damage)
     {
         currentHp -= damage;
@@ -127,13 +140,26 @@ public class Enemy : MonoBehaviour
         {
             hpSlider.value = (float)currentHp / maxHp;
         }
-        
+
+        if (player != null)
+        {
+            StopCoroutine("AggroTimer");
+            StartCoroutine(AggroTimer());
+        }
+
         if (currentHp <= 0)
         {
             Die();
         }
     }
-    
+
+    IEnumerator AggroTimer()
+    {
+        isAggroed = true;
+        yield return new WaitForSeconds(aggroDuration);
+        isAggroed = false;
+    }
+
     void TraceTarget()
     {
         Vector3 dir = (currentTarget.position - transform.position).normalized;
@@ -179,7 +205,8 @@ public class Enemy : MonoBehaviour
             Instantiate(deathEffectPrefab, transform.position, Quaternion.identity);
         }
 
-        FindObjectOfType<GameManager>()?.RecordKill();
+        // *** 아래 줄을 삭제했습니다! ***
+        // FindObjectOfType<GameManager>()?.RecordKill();
 
         PlayerControoller playerController = FindObjectOfType<PlayerControoller>();
         if (playerController != null)
@@ -189,7 +216,7 @@ public class Enemy : MonoBehaviour
 
         Destroy(gameObject);
     }
-    
+
     private void ApplyRandomEffect(PlayerControoller player)
     {
         int randomIndex = Random.Range(0, 3);
