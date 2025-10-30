@@ -282,7 +282,7 @@ MonoBehaviour:
   State: 0
   moveSpeed: 2
   traceRange: 50
-  attackRange: 6
+  attackRange: 50
   attackCooldown: 1.5
   projectileprefab: {fileID: 6964430714543550800, guid: fef537bf55c5a384abf10bdff0a79566,
     type: 3}
@@ -292,6 +292,7 @@ MonoBehaviour:
   healAmount: 20
   speedBoostAmount: 3
   speedBoostDuration: 5
+  penaltyDamage: 10
   deathEffectPrefab: {fileID: 6523002006538456268, guid: dd204c889cb16764dbc2ad6813253e4c,
     type: 3}
   selfDefenseRange: 5

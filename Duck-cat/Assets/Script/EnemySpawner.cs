@@ -6,11 +6,10 @@ public class EnemySpawner : MonoBehaviour
     public int numberOfEnemiesToSpawn = 10;
     public float spawnRange = 5f;
 
-    // 활성화될 때가 아닌, Start 시점에 스폰하도록 변경
+    // 게임 시작 시 바로 스폰
     void Start()
     {
         SpawnEnemies();
-        // GameManager 보고 로직 삭제
     }
 
     void SpawnEnemies()

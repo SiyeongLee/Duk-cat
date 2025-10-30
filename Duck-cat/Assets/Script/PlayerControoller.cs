@@ -20,30 +20,47 @@ public class PlayerControoller : MonoBehaviour
     private int currentHp;
     public Slider hpSlider;
 
-    // 사망 효과 프리팹을 연결할 변수 추가
     [Header("사망 효과")]
     public GameObject deathEffectPrefab;
-    
+    public GameObject playerModel;
+
     private float originalSpeed;
+    private bool isDead = false;
+
+    // 열쇠 소지 여부 변수 추가
+    [HideInInspector] // Inspector 창에는 보이지 않도록 함
+    public bool hasKey = false;
 
     void Start()
     {
         controller = GetComponent<CharacterController>();
         pov = virtualCam.GetCinemachineComponent<CinemachinePOV>();
-
         currentHp = maxHP;
         hpSlider.value = 1f;
-        
         originalSpeed = speed;
+        hasKey = false; // 게임 시작 시 열쇠 없음
     }
 
     void Update()
     {
+        if (isDead) return;
+
+        // PlayerPrefs에서 저장된 마우스 감도 값을 실시간으로 불러와 적용
+        // SettingsManager가 저장한 값을 사용 (기본값 10f)
+        float sensitivityMultiplier = PlayerPrefs.GetFloat("MouseSensitivity", 10f) / 10f;
+        if (pov != null)
+        {
+            pov.m_HorizontalAxis.m_MaxSpeed = 300f * sensitivityMultiplier;
+            pov.m_VerticalAxis.m_MaxSpeed = 2f * sensitivityMultiplier;
+        }
+
         if (Input.GetKeyDown(KeyCode.Tab))
         {
             pov.m_HorizontalAxis.Value = transform.eulerAngles.y;
             pov.m_VerticalAxis.Value = 0f;
         }
+
+
         CinemacineSwitcher switcher = FindObjectOfType<CinemacineSwitcher>();
         isGrounded = controller.isGrounded;
 
@@ -52,7 +69,6 @@ public class PlayerControoller : MonoBehaviour
         {
             currentSpeed = 10f;
             virtualCam.m_Lens.FieldOfView = 80f;
-
         }
         else
         {
@@ -74,7 +90,7 @@ public class PlayerControoller : MonoBehaviour
         camRight.y = 0;
         camRight.Normalize();
 
-        if (switcher.usingFreeLook)
+        if (switcher != null && switcher.usingFreeLook) // switcher가 null일 경우 대비
         {
             x = 0;
             z = 0;
@@ -97,6 +113,7 @@ public class PlayerControoller : MonoBehaviour
 
     public void TakeDamage(int damage)
     {
+        if (isDead) return;
         currentHp -= damage;
         hpSlider.value = (float)currentHp / maxHP;
         if (currentHp <= 0)
@@ -104,29 +121,23 @@ public class PlayerControoller : MonoBehaviour
             Die();
         }
     }
-    
-    void Die()
-{
-    if (deathEffectPrefab != null)
-    {
-        Instantiate(deathEffectPrefab, transform.position, Quaternion.identity);
-    }
 
-    // GameManager를 찾아 GameOver 함수 호출
-    FindObjectOfType<GameManager>().GameOver();
-    
-    Destroy(gameObject);
-}
+    void Die()
+    {
+        isDead = true;
+        if (deathEffectPrefab != null) Instantiate(deathEffectPrefab, transform.position, Quaternion.identity);
+        if (playerModel != null) playerModel.SetActive(false);
+        GetComponent<CharacterController>().enabled = false;
+        GetComponent<PlayerShooting>().enabled = false;
+        this.enabled = false;
+        FindObjectOfType<GameManager>()?.GameOver(); // null 체크 추가
+    }
 
     public void Heal(int amount)
     {
         currentHp += amount;
-        if (currentHp > maxHP)
-        {
-            currentHp = maxHP;
-        }
+        if (currentHp > maxHP) currentHp = maxHP;
         hpSlider.value = (float)currentHp / maxHP;
-        Debug.Log($"체력 {amount} 회복! 현재 HP: {currentHp}");
     }
 
     public void SpeedUp(float boostAmount, float duration)
@@ -138,11 +149,15 @@ public class PlayerControoller : MonoBehaviour
     private IEnumerator SpeedBoostCoroutine(float boostAmount, float duration)
     {
         speed += boostAmount;
-        Debug.Log($"스피드 업! {duration}초 동안 속도 증가!");
-
         yield return new WaitForSeconds(duration);
-
         speed = originalSpeed;
-        Debug.Log("스피드 버프 종료. 원래 속도로 돌아갑니다.");
+    }
+
+    // Key 스크립트가 호출할 함수
+    public void CollectKey()
+    {
+        hasKey = true;
+        Debug.Log("열쇠를 획득했습니다!");
+        // 여기에 열쇠 획득 시 UI 메시지 표시 등의 로직 추가 가능
     }
 }

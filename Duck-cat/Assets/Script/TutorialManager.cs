@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using System.Collections;
+using UnityEngine.SceneManagement; // 씬 관리를 위해 추가
 
 public class TutorialManager : MonoBehaviour
 {
@@ -13,7 +14,7 @@ public class TutorialManager : MonoBehaviour
     [Header("튜토리얼 제어 대상")]
     public PlayerControoller playerController;
     public PlayerShooting playerShooting;
-    public EnemySpawner[] enemySpawners; // EnemySpawner 배열 참조 유지
+    // public EnemySpawner[] enemySpawners; // EnemySpawner 참조 삭제
 
     [Header("튜토리얼 설정")]
     public float delayAfterAction = 1.5f;
@@ -27,21 +28,34 @@ public class TutorialManager : MonoBehaviour
         "튜토리얼 완료! 곧 게임이 시작됩니다."
     };
 
-    private GameManager gameManager; // GameManager 참조 추가
+    // GameManager 참조 삭제
+    // private GameManager gameManager;
 
     void Start()
     {
-        gameManager = FindObjectOfType<GameManager>(); // GameManager 찾기
+        // GameManager 찾기 삭제
+        // gameManager = FindObjectOfType<GameManager>();
+
+        // 튜토리얼 씬 시작 시 플레이어 찾기 (씬에 Player 프리팹이 있어야 함)
+        GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
+        if (playerObj != null)
+        {
+            playerController = playerObj.GetComponent<PlayerControoller>();
+            playerShooting = playerObj.GetComponent<PlayerShooting>();
+        }
+        else
+        {
+            Debug.LogError("TutorialManager: 씬에서 'Player' 태그를 가진 오브젝트를 찾을 수 없습니다!");
+            this.enabled = false; // 플레이어가 없으면 튜토리얼 진행 불가
+            return;
+        }
 
         tutorialPanel.SetActive(true);
         playerController.enabled = false;
         playerShooting.enabled = false;
 
-        // 시작 시 스포너를 비활성화 상태로 둡니다.
-        foreach (var spawner in enemySpawners)
-        {
-            if (spawner != null) spawner.gameObject.SetActive(false); // 오브젝트 자체를 비활성화
-        }
+        // EnemySpawner 비활성화 로직 삭제
+        // foreach (var spawner in enemySpawners) ...
 
         skipButton.onClick.AddListener(SkipTutorial);
         ShowInstruction();
@@ -119,19 +133,7 @@ public class TutorialManager : MonoBehaviour
 
     void EndTutorial()
     {
-        if (tutorialPanel != null) tutorialPanel.SetActive(false);
-        if (playerController != null) playerController.enabled = true;
-        if (playerShooting != null) playerShooting.enabled = true;
-
-        // 스포너 오브젝트들을 활성화하여 스폰 시작
-        foreach (var spawner in enemySpawners)
-        {
-            if (spawner != null) spawner.gameObject.SetActive(true);
-        }
-
-        // GameManager에게 튜토리얼 종료를 알림
-        if (gameManager != null) gameManager.StartGamePhase();
-
-        this.enabled = false;
+        // 튜토리얼이 끝나면 Map 씬 로드
+        SceneManager.LoadScene("Map2");
     }
 }

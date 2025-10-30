@@ -205,8 +205,8 @@ public class Enemy : MonoBehaviour
             Instantiate(deathEffectPrefab, transform.position, Quaternion.identity);
         }
 
-        // *** 아래 줄을 삭제했습니다! ***
-        // FindObjectOfType<GameManager>()?.RecordKill();
+        // *** 이 부분이 오류의 원인이었습니다! ***
+        // FindObjectOfType<GameManager>()?.RecordKill(); // 이 줄을 삭제하거나 주석 처리합니다.
 
         PlayerControoller playerController = FindObjectOfType<PlayerControoller>();
         if (playerController != null)
